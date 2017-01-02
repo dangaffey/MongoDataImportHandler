@@ -1,5 +1,4 @@
 import com.mongodb.*;
-import javafx.beans.binding.IntegerBinding;
 import org.apache.solr.handler.dataimport.DataImportHandlerException;
 
 import java.util.ArrayList;
