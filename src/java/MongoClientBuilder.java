@@ -1,5 +1,5 @@
-import com.mongodb.MongoClient;
-import com.mongodb.MongoCredential;
+import com.mongodb.*;
+import javafx.beans.binding.IntegerBinding;
 import org.apache.solr.handler.dataimport.DataImportHandlerException;
 
 import java.util.ArrayList;
@@ -24,7 +24,6 @@ public class MongoClientBuilder
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String DATABASE = "database";
-    private static final String READ_FROM_SECONDARY = "readFromSecondary";
 
 
     /**
@@ -40,14 +39,22 @@ public class MongoClientBuilder
         }
 
         String host = initProps.getProperty(HOST);
-        if (host != null) {
-            setHost(host);
+        if (host == null) {
+            throw new DataImportHandlerException(SEVERE, "Host(s) must be supplied");
         }
+        setHost(host);
 
         String port = initProps.getProperty(PORT);
-        if (port != null) {
-            setPort(port);
+        if (port == null) {
+            throw new DataImportHandlerException(SEVERE, "Port(s) must be supplied");
         }
+        setPort(port);
+
+
+        if (hosts.size() != ports.size()) {
+            throw new DataImportHandlerException(SEVERE, "A port must be supplied foreach host");
+        }
+
 
         String username = initProps.getProperty(USERNAME);
         String password = initProps.getProperty(PASSWORD);
@@ -103,6 +110,42 @@ public class MongoClientBuilder
 
 
     /**
+     * Provides a client that is intended to connect to a standalone node
+     *
+     * @return
+     */
+    private MongoClient createSingleInstanceClient()
+    {
+        return new MongoClient(
+                new ServerAddress(hosts.get(0), Integer.parseInt(ports.get(0))),
+                creds);
+    }
+
+
+    /**
+     * Provides a client that is intended to connect to a replica set
+     *
+     * @return
+     */
+    private MongoClient createReplicaSetClient()
+    {
+        List<ServerAddress> addresses = new ArrayList<>();
+        for (int i = 0; i < hosts.size(); i++) {
+            addresses.add(new ServerAddress(hosts.get(i), Integer.parseInt(ports.get(i))));
+        }
+
+        return new MongoClient(
+                addresses,
+                creds,
+                MongoClientOptions
+                        .builder()
+                        .readPreference(ReadPreference.secondaryPreferred())
+                        .build()
+        );
+    }
+
+
+    /**
      * Provides the database name
      */
     public String getDatabaseName()
@@ -112,12 +155,18 @@ public class MongoClientBuilder
 
 
     /**
+     * Builds the MongoClient based on the provided initialization properties
      *
      * @return
      */
     public MongoClient build()
     {
-        return null;
+        if (hosts.size() == 1) {
+            return createSingleInstanceClient();
+        }
+
+        return createReplicaSetClient();
     }
+
 
 }
