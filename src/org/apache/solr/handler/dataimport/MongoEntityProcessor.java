@@ -1,6 +1,5 @@
-import org.apache.solr.handler.dataimport.Context;
-import org.apache.solr.handler.dataimport.DataImportHandlerException;
-import org.apache.solr.handler.dataimport.EntityProcessorBase;
+package org.apache.solr.handler.dataimport;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +19,7 @@ public class MongoEntityProcessor extends EntityProcessorBase
     private static final Logger LOG = LoggerFactory.getLogger(EntityProcessorBase.class);
     private static final String FULL = "FULL_DUMP";
     private static final String DELTA = "DELTA_DUMP";
+    private static final String DATASOURCE = "datasource";
 
     private MongoDataSource dataSource;
     private String collectionName;
@@ -34,7 +34,7 @@ public class MongoEntityProcessor extends EntityProcessorBase
             throw new DataImportHandlerException(SEVERE, "Collection name must be supplied");
         }
 
-        dataSource = (MongoDataSource) context.getDataSource();
+        dataSource = (MongoDataSource) context.getDataSource(context.getEntityAttribute(DATASOURCE));
     }
 
 

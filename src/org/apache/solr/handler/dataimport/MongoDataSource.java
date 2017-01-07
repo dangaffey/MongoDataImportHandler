@@ -1,13 +1,11 @@
+package org.apache.solr.handler.dataimport;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.util.JSON;
-import org.apache.solr.handler.dataimport.Context;
-import org.apache.solr.handler.dataimport.DataImportHandlerException;
-import org.apache.solr.handler.dataimport.DataSource;
-import org.apache.solr.handler.dataimport.TemplateTransformer;
 import org.bson.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -1,6 +1,6 @@
-import com.mongodb.*;
-import org.apache.solr.handler.dataimport.DataImportHandlerException;
+package org.apache.solr.handler.dataimport;
 
+import com.mongodb.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,12 +17,16 @@ public class MongoClientBuilder
     private List<String> ports = new ArrayList<>();
     private List<MongoCredential> creds = new ArrayList<>();
     private String databaseName;
+    private ReadPreference readPreference;
 
     private static final String HOST = "host";
     private static final String PORT = "port";
     private static final String USERNAME = "username";
     private static final String PASSWORD = "password";
     private static final String DATABASE = "database";
+    private static final String PRIMARY = "primary";
+    private static final String SECONDARY = "secondary";
+    private static final String READ_PREFERENCE ="readPreference";
 
 
     /**
@@ -36,6 +40,13 @@ public class MongoClientBuilder
         if (databaseName == null) {
             throw new DataImportHandlerException(SEVERE, "Database must be supplied");
         }
+
+        String readPreference = initProps.getProperty(READ_PREFERENCE);
+        if (readPreference == null) {
+            throw new DataImportHandlerException(SEVERE, "Datasource must be named");
+        }
+        setReadPreference(readPreference);
+
 
         String host = initProps.getProperty(HOST);
         if (host == null) {
@@ -60,6 +71,27 @@ public class MongoClientBuilder
         if (username != null && password != null) {
             createMongoCredential(username, databaseName, password);
         }
+    }
+
+
+    /**
+     * Attempts to set the preferred read preference for MongoDB
+     *
+     * @param readPreference
+     */
+    private void setReadPreference(String readPreference)
+    {
+        if (readPreference.equals(PRIMARY)) {
+            this.readPreference = ReadPreference.primaryPreferred();
+            return;
+        }
+
+        if (readPreference.equals(SECONDARY)) {
+            this.readPreference = ReadPreference.secondaryPreferred();
+            return;
+        }
+
+        throw new DataImportHandlerException(SEVERE, "Read preference options are 'primary' or 'secondary'");
     }
 
 
@@ -104,7 +136,7 @@ public class MongoClientBuilder
      */
     private void createMongoCredential(String user, String db, String pass)
     {
-        creds.add(MongoCredential.createCredential(user, db, pass.toCharArray()));
+        creds.add(MongoCredential.createScramSha1Credential(user, db, pass.toCharArray()));
     }
 
 
@@ -117,7 +149,12 @@ public class MongoClientBuilder
     {
         return new MongoClient(
                 new ServerAddress(hosts.get(0), Integer.parseInt(ports.get(0))),
-                creds);
+                creds,
+                MongoClientOptions
+                        .builder()
+                        .readPreference(readPreference)
+                        .build()
+        );
     }
 
 
@@ -138,7 +175,7 @@ public class MongoClientBuilder
                 creds,
                 MongoClientOptions
                         .builder()
-                        .readPreference(ReadPreference.secondaryPreferred())
+                        .readPreference(readPreference)
                         .build()
         );
     }

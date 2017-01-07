@@ -1,6 +1,4 @@
-import org.apache.solr.handler.dataimport.Context;
-import org.apache.solr.handler.dataimport.DataImporter;
-import org.apache.solr.handler.dataimport.Transformer;
+package org.apache.solr.handler.dataimport;
 
 import java.util.Map;
 
